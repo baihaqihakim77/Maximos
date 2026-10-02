@@ -128,7 +128,7 @@ def svg_bar_chart(
             ly = padding + bar_area_h + label_h - 2
             bars.append(
                 f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="middle" '
-                f'font-size="8" fill="#8892b0" font-family="Inter,sans-serif">{labels[i]}</text>'
+                f'font-size="8" fill="#999999" font-family="Inter,sans-serif">{labels[i]}</text>'
             )
 
     return f"""<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}"
@@ -187,12 +187,12 @@ def svg_gauge(
 
     return f"""<svg width="{size}" height="{int(size * 0.65)}" viewBox="0 0 {size} {int(size * 0.65)}"
         xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">
-        <path d="{bg_path}" fill="none" stroke="{bg_color}" stroke-width="10" stroke-linecap="round" />
+        <path d="{bg_path}" fill="none" stroke="#131315" stroke-width="10" stroke-linecap="round" />
         <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
         <text x="{cx}" y="{cy - 2}" text-anchor="middle" font-size="20" font-weight="700"
             fill="#ffffff" font-family="Inter,sans-serif">{pct_text}</text>
         <text x="{cx}" y="{cy + 14}" text-anchor="middle" font-size="9" font-weight="500"
-            fill="#8892b0" font-family="Inter,sans-serif">{label}</text>
+            fill="#999999" font-family="Inter,sans-serif">{label}</text>
     </svg>"""
 
 
@@ -248,12 +248,12 @@ def _mini_gauge(
     pct_text = f"{value * 100:.1f}%"
 
     return f"""
-        <path d="{bg_path}" fill="none" stroke="#2a2d3e" stroke-width="6" stroke-linecap="round" />
+        <path d="{bg_path}" fill="none" stroke="#222226" stroke-width="6" stroke-linecap="round" />
         <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="6" stroke-linecap="round" />
         <text x="{cx}" y="{cy + 1}" text-anchor="middle" font-size="11" font-weight="700"
             fill="#fff" font-family="Inter,sans-serif">{pct_text}</text>
         <text x="{cx}" y="{cy + 13}" text-anchor="middle" font-size="8" font-weight="500"
-            fill="#8892b0" font-family="Inter,sans-serif">{label}</text>
+            fill="#999999" font-family="Inter,sans-serif">{label}</text>
     """
 
 
@@ -281,26 +281,26 @@ def plot_historical_vs_intrinsic(
     fig.add_trace(go.Scatter(
         x=price_history["date"], y=price_history["close"],
         mode="lines", name="Harga Pasar",
-        line=dict(color="#42A5F5", width=2),
-        fill="tozeroy", fillcolor="rgba(66,165,245,0.06)",
+        line=dict(color="#C682B3", width=2),
+        fill="tozeroy", fillcolor="rgba(198,130,179,0.06)",
         hovertemplate="<b>%{x|%d %b %Y}</b><br>Rp %{y:,.0f}<extra></extra>",
     ))
 
     if intrinsic_value and intrinsic_value > 0:
         fig.add_hline(
             y=intrinsic_value,
-            line=dict(color="#00E676", width=2, dash="dash"),
+            line=dict(color="#69B37A", width=2, dash="dash"),
             annotation_text=f"Intrinsic Value: {format_rupiah(intrinsic_value)}",
             annotation_position="top right",
-            annotation_font=dict(color="#00E676", size=11),
+            annotation_font=dict(color="#69B37A", size=11),
         )
 
     fig.update_layout(
-        title=dict(text="Harga Historis vs Intrinsic Value", font=dict(size=14, color="#e8eaed")),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, tickformat=","),
+        title=dict(text="Harga Historis vs Intrinsic Value", font=dict(size=14, color="#FFFFFF")),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, color="#999999"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, tickformat=",", color="#999999"),
         template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(34,34,38,0.6)",
         height=380, hovermode="x unified",
         margin=dict(l=50, r=15, t=45, b=30),
         legend=dict(orientation="h", y=1.08, x=0.5, xanchor="center"),
@@ -326,7 +326,7 @@ def plot_future_projection(
 
     df = pd.DataFrame(projected_values)
     n = len(df)
-    colors = [f"rgba({max(30, 66 - i*4)}, {min(255, 165 + i*8)}, {min(255, 245 - i*2)}, 0.7)" for i in range(n)]
+    colors = [f"rgba({min(198, 140 + i*5)}, {max(100, 130 - i*4)}, {min(200, 150 + i*4)}, {0.5 + 0.4*(i/max(1,n-1)):.2f})" for i in range(n)]
 
     fig = go.Figure()
 
@@ -338,16 +338,16 @@ def plot_future_projection(
 
     fig.add_trace(go.Scatter(
         x=df["period"], y=df["value"], mode="lines+markers", name="Trend",
-        line=dict(color="#FFD600", width=2), marker=dict(size=5, color="#FFD600"),
+        line=dict(color="#C682B3", width=2), marker=dict(size=5, color="#C682B3"),
         hoverinfo="skip",
     ))
 
     fig.update_layout(
-        title=dict(text=label, font=dict(size=14, color="#e8eaed")),
-        xaxis=dict(title="Tahun ke-", gridcolor="rgba(255,255,255,0.04)", dtick=1),
-        yaxis=dict(title="Nilai (Rp)", gridcolor="rgba(255,255,255,0.04)", tickformat=","),
+        title=dict(text=label, font=dict(size=14, color="#FFFFFF")),
+        xaxis=dict(title="Tahun ke-", gridcolor="rgba(255,255,255,0.04)", dtick=1, color="#999999"),
+        yaxis=dict(title="Nilai (Rp)", gridcolor="rgba(255,255,255,0.04)", tickformat=",", color="#999999"),
         template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(34,34,38,0.6)",
         height=380, showlegend=False,
         margin=dict(l=50, r=15, t=45, b=30),
     )

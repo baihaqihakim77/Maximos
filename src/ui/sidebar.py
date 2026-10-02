@@ -87,26 +87,12 @@ def render_ticker_input() -> dict:
     with col_btn:
         analyze = st.button("📊  ANALYSIS", use_container_width=True, type="primary")
 
-    # Parameter lanjutan (tersembunyi di expander, agar halaman bersih)
-    with st.expander("⚙️ Pengaturan Lanjutan", expanded=False):
-        adv_c1, adv_c2, adv_c3 = st.columns(3)
-        with adv_c1:
-            discount_rate = st.slider(
-                "Discount Rate (WACC)", 0.05, 0.25, 0.10, 0.01, format="%.0f%%",
-                help="Tingkat pengembalian minimum yang diharapkan (8-12% umum).",
-            )
-        with adv_c2:
-            growth_rate = st.slider(
-                "Growth Rate Assumption", 0.00, 0.30, 0.08, 0.01, format="%.0f%%",
-                help="Asumsi pertumbuhan arus kas tahunan (5-10% konservatif).",
-            )
-        with adv_c3:
-            projection_years = st.number_input(
-                "Tahun Proyeksi", 3, 20, 10, 1,
-                help="Jumlah tahun ke depan untuk proyeksi Future Value.",
-            )
-
     company_name = INDONESIAN_STOCKS.get(ticker, ticker) if ticker else ""
+
+    # Default parameter
+    discount_rate = 0.10
+    growth_rate = 0.08
+    projection_years = 10
 
     return {
         "ticker": ticker.strip().upper() if ticker else "",

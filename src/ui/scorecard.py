@@ -21,8 +21,8 @@ from src.utils.formatter import format_rupiah_short, format_percent
 _CARD_CSS = """
 <style>
 .vi-card {
-    background: linear-gradient(145deg, #1a1d2e, #161929);
-    border: 1px solid rgba(99, 115, 148, 0.10);
+    background: #222226;
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: 14px;
     padding: 1rem 1.1rem;
     margin-bottom: 0.6rem;
@@ -35,7 +35,7 @@ _CARD_CSS = """
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(68,138,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(198,130,179,0.35), transparent);
 }
 .vi-card-head {
     display: flex;
@@ -52,23 +52,23 @@ _CARD_CSS = """
 .vi-card-title .label {
     font-size: 0.82rem;
     font-weight: 600;
-    color: #c8cdd8;
-    letter-spacing: 0.02em;
+    color: #FFFFFF;
+    letter-spacing: 0.03em;
 }
 .vi-card-value {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #8892b0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #999999;
 }
 .vi-card-big-value {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: #e8eaed;
+    color: #FFFFFF;
     margin-bottom: 2px;
 }
 .vi-card-desc {
-    font-size: 0.72rem;
-    color: #8892b0;
+    font-size: 0.7rem;
+    color: #999999;
     line-height: 1.45;
     margin-top: 4px;
 }
@@ -86,20 +86,24 @@ _CARD_CSS = """
     letter-spacing: 0.03em;
 }
 .vi-badge-pass {
-    background: rgba(0,230,118,0.12);
-    color: #00E676;
+    background: rgba(105,179,122,0.15);
+    color: #69B37A;
+    border: 1px solid rgba(105,179,122,0.2);
 }
 .vi-badge-fail {
     background: rgba(255,82,82,0.12);
-    color: #FF5252;
+    color: #FF5E5E;
+    border: 1px solid rgba(255,82,82,0.15);
 }
 .vi-badge-warn {
-    background: rgba(255,214,0,0.12);
+    background: rgba(255,214,0,0.10);
     color: #FFD600;
+    border: 1px solid rgba(255,214,0,0.15);
 }
 .vi-badge-info {
-    background: rgba(68,138,255,0.12);
-    color: #448AFF;
+    background: rgba(198,130,179,0.12);
+    color: #C682B3;
+    border: 1px solid rgba(198,130,179,0.2);
 }
 .vi-stats-row {
     display: flex;
@@ -113,12 +117,14 @@ _CARD_CSS = """
 .vi-stat-val {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #e8eaed;
+    color: #FFFFFF;
 }
 .vi-stat-label {
-    font-size: 0.65rem;
-    color: #8892b0;
+    font-size: 0.62rem;
+    color: #999999;
     margin-top: 1px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 .vi-card-footer {
     margin-top: 6px;
@@ -128,8 +134,8 @@ _CARD_CSS = """
 }
 /* Kartu besar untuk MoS dan Summary */
 .vi-card-tall {
-    background: linear-gradient(145deg, #1a1d2e, #161929);
-    border: 1px solid rgba(99, 115, 148, 0.10);
+    background: #222226;
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: 14px;
     padding: 1.2rem;
     margin-bottom: 0.6rem;
@@ -141,18 +147,18 @@ _CARD_CSS = """
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(0,230,118,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(198,130,179,0.4), transparent);
 }
 .vi-summary-text {
-    font-size: 0.74rem;
-    color: #b0b8cc;
-    line-height: 1.55;
+    font-size: 0.72rem;
+    color: #999999;
+    line-height: 1.6;
     margin-top: 8px;
 }
 .vi-summary-action {
     font-size: 0.8rem;
     font-weight: 700;
-    color: #FFD600;
+    color: #C682B3;
     margin-top: 10px;
 }
 </style>
@@ -195,7 +201,7 @@ def render_scorecard(
     """
     _inject_css()
 
-    # === Main layout: left grid + right column ===
+    # === Main layout: left grid (3×3) + right column (Summary) ===
     main_left, main_right = st.columns([3, 1.2])
 
     with main_left:
@@ -217,18 +223,18 @@ def render_scorecard(
         with r2c3:
             _card_debt(pilar_scores)
 
-        # Row 3: Growth | Management | Valuation
+        # Row 3: Growth | Valuation | Margin of Safety
         r3c1, r3c2, r3c3 = st.columns(3)
         with r3c1:
             _card_growth(pilar_scores, income_df)
         with r3c2:
-            _card_management(pilar_scores)
-        with r3c3:
             _card_valuation(pilar_scores, company_report)
+        with r3c3:
+            _card_margin_of_safety(pilar_scores, current_price)
 
     with main_right:
-        _card_margin_of_safety(pilar_scores, current_price)
         _card_summary(narrative, action, pilar_scores)
+
 
 
 # ═══════════════════════════════════════════════════════
@@ -255,7 +261,7 @@ def _card_business(scores: dict, company_name: str) -> None:
                 <span class="label">Business</span>
             </div>
         </div>
-        <div class="vi-card-desc" style="font-weight:600;color:#c8cdd8;font-size:0.76rem;">
+        <div class="vi-card-desc" style="font-weight:600;color:#FFFFFF;font-size:0.76rem;">
             {company_name.upper() if company_name else 'N/A'}
         </div>
         <div class="vi-card-desc">
@@ -263,7 +269,7 @@ def _card_business(scores: dict, company_name: str) -> None:
             Diversified portfolio.
         </div>
         <div class="vi-card-footer" style="margin-top:12px;">
-            <span class="vi-card-desc">Rating: <b style="color:#e8eaed;">{passed_count}/{total}</b></span>
+            <span class="vi-card-desc">Rating: <b style="color:#FFFFFF;">{passed_count}/{total}</b></span>
             <span class="vi-badge {badge_color}">{badge_text}</span>
         </div>
     </div>
@@ -285,7 +291,7 @@ def _card_revenue(scores: dict, income_df: pd.DataFrame) -> None:
         rev_latest = revs[-1]
         n = len(revs)
         years = [str(2024 - n + 1 + i) for i in range(n)]
-        bar_svg = svg_bar_chart(revs[-5:], labels=years[-5:], width=150, height=60, color="#448AFF")
+        bar_svg = svg_bar_chart(revs[-5:], labels=years[-5:], width=150, height=60, color="#C682B3")
 
     badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
     rev_text = format_rupiah_short(rev_latest) if rev_latest else "N/A"
@@ -323,7 +329,7 @@ def _card_profit(scores: dict, income_df: pd.DataFrame) -> None:
     if prof_col and len(income_df) >= 2:
         profs = income_df[prof_col].astype(float).tolist()
         prof_latest = profs[-1]
-        sparkline = svg_sparkline(profs[-5:], width=150, height=45, color="#00E676", fill=True)
+        sparkline = svg_sparkline(profs[-5:], width=150, height=45, color="#69B37A", fill=True)
 
     badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
 
@@ -364,7 +370,7 @@ def _card_cashflow(scores: dict, cashflow_df: pd.DataFrame) -> None:
     if cf_col:
         cfs = cashflow_df[cf_col].astype(float).tolist()
         cf_latest = cfs[-1]
-        sparkline = svg_sparkline(cfs[-5:], width=150, height=45, color="#42A5F5", fill=True)
+        sparkline = svg_sparkline(cfs[-5:], width=150, height=45, color="#C682B3", fill=True)
 
     badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
     rating_cls = "vi-badge-pass" if passed else "vi-badge-fail"
@@ -392,36 +398,52 @@ def _card_cashflow(scores: dict, cashflow_df: pd.DataFrame) -> None:
 
 
 def _card_roic_roe(scores: dict) -> None:
-    """Kartu ROIC / ROE."""
+    """Kartu ROIC / ROE — CSS-only, tanpa SVG."""
     data = scores.get("roic_roe", {})
     roe_val = data.get("roe", data.get("value", 0))
     roic_val = data.get("roic", data.get("value", 0) * 0.85)
     passed = data.get("pass_fail", False)
 
-    gauge_svg = svg_dual_gauge(roe_val, roic_val, "ROE", "ROIC", size=60, color="#448AFF")
     badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
+    badge_text = "LULUS" if passed else "PERLU PERHATIAN"
+
+    # Progress bar width (cap at 100%)
+    roe_bar = min(100, abs(roe_val) * 100 * 3)   # scale: 33% ROE = full bar
+    roic_bar = min(100, abs(roic_val) * 100 * 3)
+    roe_color = "#69B37A" if roe_val >= 0.10 else "#FF5E5E"
+    roic_color = "#69B37A" if roic_val >= 0.10 else "#FF5E5E"
 
     st.markdown(f"""
     <div class="vi-card">
         <div class="vi-card-head">
             <div class="vi-card-title">
                 <span class="icon">🎯</span>
-                <span class="label">ROIC/ROE</span>
+                <span class="label">ROIC / ROE</span>
             </div>
-            <span class="vi-card-value">%</span>
+            <span class="vi-badge {badge_cls}">{badge_text}</span>
         </div>
-        <div class="vi-card-chart" style="margin:10px 0;">
-            {gauge_svg}
+        <div style="margin-top:14px;">
+            <div style="margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                    <span style="font-size:0.65rem;color:#999999;text-transform:uppercase;letter-spacing:0.04em;">ROE</span>
+                    <span style="font-size:1rem;font-weight:700;color:{roe_color};">{format_percent(roe_val)}</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:5px;">
+                    <div style="width:{roe_bar:.1f}%;height:100%;border-radius:3px;background:{roe_color};"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                    <span style="font-size:0.65rem;color:#999999;text-transform:uppercase;letter-spacing:0.04em;">ROIC</span>
+                    <span style="font-size:1rem;font-weight:700;color:{roic_color};">{format_percent(roic_val)}</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:5px;">
+                    <div style="width:{roic_bar:.1f}%;height:100%;border-radius:3px;background:{roic_color};"></div>
+                </div>
+            </div>
         </div>
-        <div class="vi-stats-row">
-            <div class="vi-stat">
-                <div class="vi-stat-val">{format_percent(roe_val)}</div>
-                <div class="vi-stat-label">ROE</div>
-            </div>
-            <div class="vi-stat">
-                <div class="vi-stat-val">{format_percent(roic_val)}</div>
-                <div class="vi-stat-label">ROIC</div>
-            </div>
+        <div class="vi-card-desc" style="margin-top:10px;">
+            Ideal: ROE &amp; ROIC &gt; 10%
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -478,7 +500,7 @@ def _card_growth(scores: dict, income_df: pd.DataFrame) -> None:
     bar_svg = ""
     if detail and len(detail) >= 2:
         labels = [f"{i+1}yr" for i in range(len(detail[-5:]))]
-        bar_svg = svg_bar_chart(detail[-5:], labels=labels, width=150, height=55, color="#00E676")
+        bar_svg = svg_bar_chart(detail[-5:], labels=labels, width=150, height=55, color="#69B37A")
 
     badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
 
@@ -501,41 +523,6 @@ def _card_growth(scores: dict, income_df: pd.DataFrame) -> None:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-
-def _card_management(scores: dict) -> None:
-    """Kartu Efisiensi Manajemen."""
-    data = scores.get("efisiensi_manajemen", {})
-    at = data.get("value", 0)
-    passed = data.get("pass_fail", False)
-    margin_trend = data.get("margin_trend_positive", False)
-
-    # Alignment score proxy: berdasarkan beberapa pilar
-    efficiency_score = int(at * 100) if at < 1 else min(99, int(at * 50))
-    efficiency_score = max(10, min(99, efficiency_score))
-
-    badge_cls = "vi-badge-pass" if passed else "vi-badge-fail"
-
-    st.markdown(f"""
-    <div class="vi-card">
-        <div class="vi-card-head">
-            <div class="vi-card-title">
-                <span class="icon">👔</span>
-                <span class="label">Management</span>
-            </div>
-        </div>
-        <div class="vi-card-desc" style="margin-top:4px;">
-            <b style="color:#c8cdd8;">EFFICIENCY:</b><br>
-            Asset Turnover: <b style="color:#e8eaed;">{at:.2f}x</b><br>
-            Margin Trend: <b style="color:{'#00E676' if margin_trend else '#FF5252'};">{"↑ Positif" if margin_trend else "↓ Negatif"}</b>
-        </div>
-        <div class="vi-card-footer" style="margin-top:14px;">
-            <span class="vi-card-desc">Alignment score: <b style="color:#e8eaed;">{efficiency_score}%</b></span>
-            <span class="vi-badge {badge_cls}">{"EFFICIENT" if passed else "NEEDS WORK"}</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 
 def _card_valuation(scores: dict, company_report: dict) -> None:
     """Kartu Valuation / Intrinsic Value."""
@@ -578,7 +565,7 @@ def _card_valuation(scores: dict, company_report: dict) -> None:
             </div>
         </div>
         <div class="vi-card-desc" style="text-align:center;margin-top:8px;">
-            Intrinsic Value: <b style="color:#e8eaed;">{format_rupiah_short(iv)}</b>
+            Intrinsic Value: <b style="color:#FFFFFF;">{format_rupiah_short(iv)}</b>
         </div>
         <div style="text-align:center;margin-top:10px;">
             <span class="vi-badge {badge_cls}">{badge_text}</span>
@@ -588,39 +575,57 @@ def _card_valuation(scores: dict, company_report: dict) -> None:
 
 
 def _card_margin_of_safety(scores: dict, current_price: float) -> None:
-    """Kartu besar Margin of Safety (gauge)."""
+    """Kartu Margin of Safety — CSS conic-gradient, tanpa SVG."""
     data = scores.get("margin_of_safety", {})
     mos = data.get("value", 0)
     iv = data.get("intrinsic_value", 0)
-    passed = data.get("pass_fail", False)
 
-    # Warna gauge berdasarkan MoS
     if mos > 0.25:
-        gauge_color = "#00E676"
+        gauge_color = "#69B37A"
     elif mos > 0:
         gauge_color = "#FFD600"
     else:
-        gauge_color = "#FF5252"
+        gauge_color = "#FF5E5E"
 
-    gauge_svg = svg_gauge(abs(mos), size=160, color=gauge_color, label="MARGIN OF SAFETY")
+    mos_badge_cls = "vi-badge-pass" if mos > 0.25 else ("vi-badge-warn" if mos > 0 else "vi-badge-fail")
+    mos_badge_text = "AMAN" if mos > 0.25 else ("CUKUP" if mos > 0 else "MAHAL")
+
+    pct_display = f"{abs(mos)*100:.1f}%"
+    # CSS conic-gradient donut: fill proportional to MoS (cap at 100%)
+    fill_deg = min(360, abs(mos) * 360)
 
     st.markdown(f"""
-    <div class="vi-card-tall" style="text-align:center; min-height:260px;">
-        <div style="margin-top:8px;">{gauge_svg}</div>
-        <div style="font-size:1rem;font-weight:700;color:#e8eaed;margin-top:12px;">
-            MARGIN OF SAFETY
+    <div class="vi-card">
+        <div class="vi-card-head">
+            <div class="vi-card-title">
+                <span class="icon">🛡️</span>
+                <span class="label">Margin of Safety</span>
+            </div>
+            <span class="vi-badge {mos_badge_cls}">{mos_badge_text}</span>
         </div>
-        <div class="vi-card-desc" style="text-align:center;margin-top:8px;">
-            Harga saat ini {"" if mos >= 0 else "di atas"} {format_percent(abs(mos))}
-            {"di bawah" if mos >= 0 else "di atas"} estimasi Intrinsic Value.
+        <div style="display:flex;align-items:center;justify-content:center;margin:10px 0;">
+            <div style="
+                width:72px;height:72px;
+                border-radius:50%;
+                background:conic-gradient({gauge_color} {fill_deg:.1f}deg, rgba(255,255,255,0.06) 0deg);
+                display:flex;align-items:center;justify-content:center;
+            ">
+                <div style="
+                    width:52px;height:52px;
+                    border-radius:50%;
+                    background:#222226;
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.72rem;font-weight:700;color:{gauge_color};
+                ">{pct_display}</div>
+            </div>
         </div>
-        <div class="vi-stats-row" style="margin-top:10px;">
+        <div class="vi-stats-row" style="margin-top:4px;">
             <div class="vi-stat">
-                <div class="vi-stat-val" style="font-size:0.85rem;">{format_rupiah_short(current_price)}</div>
+                <div class="vi-stat-val" style="font-size:0.82rem;">{format_rupiah_short(current_price)}</div>
                 <div class="vi-stat-label">Harga</div>
             </div>
             <div class="vi-stat">
-                <div class="vi-stat-val" style="font-size:0.85rem;">{format_rupiah_short(iv)}</div>
+                <div class="vi-stat-val" style="font-size:0.82rem;">{format_rupiah_short(iv)}</div>
                 <div class="vi-stat-label">Intrinsic</div>
             </div>
         </div>
@@ -634,7 +639,7 @@ def _card_summary(narrative: str, action: str, scores: dict) -> None:
     passed = sum(1 for v in scores.values() if v.get("pass_fail", False))
 
     # Warna action
-    action_color = "#00E676" if action in ("Hold", "Buy") else ("#FFD600" if action == "Watch" else "#FF5252")
+    action_color = "#69B37A" if action in ("Hold", "Buy") else ("#FFD600" if action == "Watch" else "#FF5E5E")
 
     # Bersihkan markdown formatting untuk HTML
     narrative_html = narrative.replace("\n\n", "<br><br>").replace("\n", "<br>")
@@ -653,7 +658,7 @@ def _card_summary(narrative: str, action: str, scores: dict) -> None:
         </div>
         <div class="vi-summary-text">{narrative_html}</div>
         <div class="vi-summary-action" style="color:{action_color};margin-top:14px;">
-            Score: {passed}/{total} — Action: {action}
+            Score: {passed}/{total} — Action: <span style="color:#C682B3;">{action}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
