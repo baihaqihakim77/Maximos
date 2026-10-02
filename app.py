@@ -29,14 +29,10 @@ from src.services.sectors_service import (
     get_company_report, get_financial_statements, get_historical_price,
 )
 from src.services.llm_service import generate_narrative, fallback_narrative
-from src.engine.growth import (
+from src.engine.engine import (
     calculate_profitability, calculate_revenue_growth_yoy,
     calculate_profit_growth_yoy, calculate_cashflow_growth_yoy, calculate_cagr,
-)
-from src.engine.health import (
-    calculate_roe, calculate_roic, calculate_debt_health, calculate_management_efficiency,
-)
-from src.engine.valuation import (
+    calculate_roe, calculate_roic, calculate_debt_health,
     calculate_dcf, project_future_value_recurrence, calculate_margin_of_safety,
 )
 from src.ui.sidebar import render_ticker_input
@@ -48,13 +44,13 @@ from src.utils.formatter import format_rupiah, format_rupiah_short
 # Page Config — single page, no sidebar
 # ════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Value Investing Dashboard",
+    page_title="Maximos",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ── Global CSS ──
+# ── Global CSS (New Design: Dark #131315 palette) ──
 st.markdown("""
 <style>
     /* Sembunyikan sidebar, header, footer default */
@@ -65,86 +61,153 @@ st.markdown("""
     header { visibility: hidden; }
 
     /* Font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap');
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        background-color: #131315 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Background utama */
+    .stApp, .stApp > div {
+        background-color: #131315 !important;
     }
 
     /* Reduce spacing antar kolom Streamlit */
-    .stColumn > div { padding: 0 0.25rem !important; }
+    .stColumn > div { padding: 0 0.3rem !important; }
 
     /* Kurangi padding atas */
     .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 1.2rem !important;
         padding-bottom: 1rem !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        max-width: 100% !important;
     }
 
-    /* Header price section */
-    .price-header {
+    /* ── HEADER TOP BAR ── */
+    .top-header {
         display: flex;
-        align-items: baseline;
-        gap: 12px;
-        margin: 0.3rem 0 0.2rem 0;
+        align-items: center;
+        justify-content: space-between;
+        background: #222226;
+        border-radius: 12px;
+        padding: 0.75rem 1.4rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(198,130,179,0.12);
     }
-    .price-value {
-        font-size: 2rem;
+    .header-ticker {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .ticker-badge {
+        background: #131315;
+        border: 1.5px solid rgba(198,130,179,0.4);
+        border-radius: 8px;
+        padding: 4px 14px;
+        font-size: 0.88rem;
         font-weight: 700;
-        color: #e8eaed;
-        font-family: 'Inter', sans-serif;
+        color: #FFFFFF;
+        letter-spacing: 0.06em;
     }
-    .price-change-up {
-        font-size: 0.95rem;
+    .header-company-name {
+        font-size: 1rem;
         font-weight: 600;
-        color: #00E676;
-        background: rgba(0,230,118,0.1);
-        padding: 2px 10px;
-        border-radius: 6px;
+        color: #FFFFFF;
+        letter-spacing: 0.01em;
     }
-    .price-change-down {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #FF5252;
-        background: rgba(255,82,82,0.1);
-        padding: 2px 10px;
-        border-radius: 6px;
-    }
-    .price-label {
-        font-size: 0.78rem;
-        color: #8892b0;
+    .header-sub {
+        font-size: 0.7rem;
+        color: #999999;
         margin-top: 2px;
     }
-    .company-name {
-        font-family: 'Playfair Display', serif;
-        font-style: italic;
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: #c8cdd8;
+    .header-price-block {
         text-align: right;
     }
-    .meta-info {
-        font-size: 0.7rem;
-        color: #5a6272;
-        text-align: center;
-        margin-top: 2px;
+    .header-price-value {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #FFFFFF;
+        font-family: 'Outfit', sans-serif;
+        letter-spacing: -0.01em;
     }
+    .header-price-label {
+        font-size: 0.68rem;
+        color: #999999;
+        margin-top: 1px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .price-change-up {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #69B37A;
+        background: rgba(105,179,122,0.12);
+        padding: 2px 9px;
+        border-radius: 5px;
+        margin-left: 6px;
+    }
+    .price-change-down {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #FF5252;
+        background: rgba(255,82,82,0.12);
+        padding: 2px 9px;
+        border-radius: 5px;
+        margin-left: 6px;
+    }
+    .header-meta {
+        font-size: 0.68rem;
+        color: #999999;
+        margin-top: 3px;
+    }
+
+    /* Section divider */
     .section-line {
         border: none;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        margin: 1rem 0;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        margin: 0.8rem 0;
     }
-    /* Tombol ANALYSIS styling */
+
+    /* Tombol ANALYSIS styling (accent pink-purple) */
     .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #1a1d2e, #252840) !important;
-        border: 1px solid rgba(68,138,255,0.3) !important;
-        color: #448AFF !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.05em !important;
+        background: linear-gradient(135deg, #C682B3, #a05590) !important;
+        border: none !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.06em !important;
         border-radius: 8px !important;
         height: 42px !important;
+        font-size: 0.82rem !important;
+        box-shadow: 0 4px 16px rgba(198,130,179,0.25) !important;
+        transition: all 0.2s ease !important;
     }
     .stButton > button[kind="primary"]:hover {
-        border-color: #448AFF !important;
-        background: linear-gradient(135deg, #1e2136, #2a2d4a) !important;
+        background: linear-gradient(135deg, #d494c4, #b366a2) !important;
+        box-shadow: 0 6px 22px rgba(198,130,179,0.35) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Selectbox styling */
+    .stSelectbox > div > div {
+        background: #222226 !important;
+        border: 1px solid rgba(198,130,179,0.2) !important;
+        border-radius: 8px !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background: #222226 !important;
+        border-radius: 8px !important;
+        color: #999999 !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Slider styling */
+    .stSlider > div > div > div > div {
+        background: #C682B3 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -162,19 +225,8 @@ def main() -> None:
     projection_years = params["projection_years"]
 
     if not params.get("analyze", False):
-        # Tampilan awal sebelum analisis
-        st.markdown("""
-        <div style="text-align:center; padding:4rem 2rem;">
-            <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
-            <div style="font-size:1.3rem; font-weight:600; color:#c8cdd8;">
-                Value Investing Dashboard
-            </div>
-            <div style="font-size:0.85rem; color:#8892b0; margin-top:0.5rem;">
-                Pilih saham dan klik <b>ANALYSIS</b> untuk memulai analisis 10 pilar value investing
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
         return
+
 
     if not ticker:
         st.error("⚠️ Silakan pilih kode saham terlebih dahulu.")
@@ -211,48 +263,57 @@ def main() -> None:
     )
 
     # ══════════════════════════════════════════════════
-    # STEP 3: Header — Harga + Nama Perusahaan
+    # STEP 3: Header Top Bar — Ticker + Harga + Nama
     # ══════════════════════════════════════════════════
     current_price = _get_current_price(price_history)
     price_change_pct = _get_price_change(price_history)
 
-    col_price, col_meta, col_name = st.columns([3, 3, 3])
+    from datetime import datetime
+    # v2: company_name ada di root response, fallback ke daftar lokal
+    api_name = ""
+    try:
+        api_name = (
+            company_report.get("company_name", "")
+            or company_report.get("overview", {}).get("company_name", "")
+        )
+    except (AttributeError, TypeError):
+        pass
+    display_name = api_name if api_name else company_name
 
-    with col_price:
-        change_cls = "price-change-up" if price_change_pct >= 0 else "price-change-down"
-        change_sign = "+" if price_change_pct >= 0 else ""
-        change_arrow = "↗" if price_change_pct >= 0 else "↘"
-        st.markdown(f"""
-        <div class="price-header">
-            <span class="price-value">{format_rupiah(current_price)}</span>
-            <span class="{change_cls}">{change_arrow} {change_sign}{price_change_pct*100:.1f}%</span>
+    change_cls = "price-change-up" if price_change_pct >= 0 else "price-change-down"
+    change_sign = "+" if price_change_pct >= 0 else ""
+
+    # Ambil sektor dari company_report
+    sector = ""
+    try:
+        sector = company_report.get("sector", "") or company_report.get("overview", {}).get("sector", "")
+    except (AttributeError, TypeError):
+        pass
+
+    st.markdown(f"""
+    <div class="top-header">
+        <div class="header-ticker">
+            <span class="ticker-badge">{ticker}</span>
+            <div>
+                <div class="header-company-name">{display_name}</div>
+                <div class="header-sub">{sector if sector else 'IDX &bull; Fundamental Analysis'}</div>
+            </div>
         </div>
-        <div class="price-label">Current Price</div>
-        """, unsafe_allow_html=True)
-
-    with col_meta:
-        from datetime import datetime
-        st.markdown(f"""
-        <div class="meta-info" style="margin-top:12px;">
-            Last Updated: {datetime.now().strftime("%B %Y")}<br>
-            Data Source: Sectors API
+        <div style="display:flex; align-items:center; gap:2rem;">
+            <div style="text-align:center;">
+                <div style="font-size:0.65rem; color:#999999; text-transform:uppercase; letter-spacing:0.05em;">Last Updated</div>
+                <div style="font-size:0.8rem; color:#FFFFFF; font-weight:500;">{datetime.now().strftime("%b %Y")}</div>
+            </div>
+            <div class="header-price-block">
+                <div style="display:flex; align-items:baseline; justify-content:flex-end;">
+                    <span class="header-price-value">{format_rupiah(current_price)}</span>
+                    <span class="{change_cls}">{change_sign}{price_change_pct*100:.2f}%</span>
+                </div>
+                <div class="header-price-label">Current Price (IDR)</div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-
-    with col_name:
-        # v2: company_name ada di root response, fallback ke daftar lokal
-        api_name = ""
-        try:
-            api_name = (
-                company_report.get("company_name", "")
-                or company_report.get("overview", {}).get("company_name", "")
-            )
-        except (AttributeError, TypeError):
-            pass
-        display_name = api_name if api_name else company_name
-        st.markdown(f'<div class="company-name">{display_name}</div>', unsafe_allow_html=True)
-
-    st.markdown('<hr class="section-line">', unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════
     # STEP 4: Narasi AI (hitung dulu, tampilkan di kartu)
@@ -292,34 +353,7 @@ def main() -> None:
         company_name=company_name,
     )
 
-    # ══════════════════════════════════════════════════
-    # STEP 6: Grafik Plotly (di bawah kartu)
-    # ══════════════════════════════════════════════════
-    st.markdown('<hr class="section-line">', unsafe_allow_html=True)
-
-    chart_c1, chart_c2 = st.columns(2)
-    with chart_c1:
-        iv = pilar_scores.get("intrinsic_value", {}).get("intrinsic_value", 0)
-        plot_historical_vs_intrinsic(price_history, iv)
-
-    with chart_c2:
-        projected = project_future_value_recurrence(
-            initial_value=current_price if current_price > 0 else 1000,
-            growth_rate=growth_rate,
-            periods=projection_years,
-        )
-        plot_future_projection(projected, label="Proyeksi Future Value (Relasi Rekurensi)")
-
-    # Footer
-    st.markdown("""
-    <div style="text-align:center;margin-top:2rem;padding:1rem;">
-        <span style="font-size:0.7rem;color:#5a6272;">
-            Value Investing Dashboard — Data dari Sectors API — Bukan rekomendasi investasi
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-
-
+    
 # ═══════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════
@@ -369,13 +403,6 @@ def _evaluate_all_pillars(
 
     # 7. Growth CAGR
     scores["growth_cagr"] = calculate_cagr(income_df, column_hint="revenue")
-
-    # 8. Efisiensi Manajemen
-    if balance_df is not None and not balance_df.empty:
-        scores["efisiensi_manajemen"] = calculate_management_efficiency(income_df, balance_df)
-    else:
-        scores["efisiensi_manajemen"] = {"value": 0.0, "pass_fail": False,
-                                          "threshold": "> 0.5", "margin_trend_positive": False}
 
     # 9. Intrinsic Value (DCF)
     fcf_list = _extract_fcf(cashflow_df)
