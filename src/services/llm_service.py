@@ -14,16 +14,15 @@ from google import genai
 _LLM_TIMEOUT = 45
 
 _PILAR_NAMES = {
-    "profitabilitas": "Profitabilitas",
-    "revenue_growth": "Revenue Growth",
-    "profit_growth": "Profit Growth",
-    "cashflow_growth": "Cash Flow Growth",
-    "roic_roe": "ROIC / ROE",
-    "debt_health": "Debt Health (Kesehatan Hutang)",
-    "growth_cagr": "Growth CAGR",
-    "efisiensi_manajemen": "Efisiensi Manajemen",
-    "intrinsic_value": "Intrinsic Value (DCF)",
-    "margin_of_safety": "Margin of Safety",
+    "profitabilitas": "Profitabilitas (NPM)",
+    "revenue_growth": "Pertumbuhan Pendapatan (YoY)",
+    "profit_growth": "Pertumbuhan Laba Bersih (YoY)",
+    "cashflow_growth": "Pertumbuhan Arus Kas (FCF/CFO)",
+    "roic_roe": "Efisiensi Modal (ROIC & ROE)",
+    "debt_health": "Kesehatan Hutang (D/E, D/A, ICR)",
+    "growth_cagr": "Pertumbuhan Majemuk (CAGR)",
+    "intrinsic_value": "Nilai Intrinsik (DCF Model)",
+    "margin_of_safety": "Margin of Safety (MoS)",
 }
 
 
@@ -119,7 +118,8 @@ def fallback_narrative(pilar_scores: dict[str, dict[str, Any]]) -> str:
     lulus_text = ", ".join(pilar_lulus) if pilar_lulus else "tidak ada"
     gagal_text = ", ".join(pilar_gagal) if pilar_gagal else "tidak ada"
 
-    if passed >= 8:
+    # Kalibrasi threshold untuk sistem 9 pilar
+    if passed >= 7:
         ringkasan = (
             f"Mayoritas pilar menunjukkan kondisi fundamental yang **sangat sehat**. "
             f"Dari {total} pilar, **{passed} LULUS** dan {failed} belum memenuhi threshold.\n\n"
@@ -128,27 +128,27 @@ def fallback_narrative(pilar_scores: dict[str, dict[str, Any]]) -> str:
         if pilar_gagal:
             ringkasan += f"**Perlu perhatian:** {gagal_text}.\n\n"
         ringkasan += (
-            "Secara keseluruhan, profil value investing menarik. Namun perlu "
-            "dilengkapi riset kualitatif sebelum keputusan investasi."
+            "Secara keseluruhan, profil value investing menarik dengan margin keamanan memadai. Namun perlu "
+            "dilengkapi analisis kualitatif terhadap manajemen dan prospek industri."
         )
-        action = "Hold"
+        action = "Buy"
     elif passed >= 5:
         ringkasan = (
-            f"Perusahaan menunjukkan kinerja **campuran**. "
+            f"Perusahaan menunjukkan kinerja **campuran** yang moderat. "
             f"Dari {total} pilar, **{passed} LULUS** sementara {failed} belum memenuhi.\n\n"
             f"**Kekuatan:** {lulus_text}.\n\n"
             f"**Kelemahan:** {gagal_text}.\n\n"
-            "Investor sebaiknya analisis lebih lanjut apakah kelemahan "
-            "bersifat sementara atau struktural."
+            "Investor sebaiknya menganalisis lebih lanjut apakah hambatan "
+            "bersifat sementara atau terdapat perubahan struktural."
         )
-        action = "Watch"
+        action = "Hold"
     else:
         ringkasan = (
-            f"⚠️ Sejumlah pilar menunjukkan **kelemahan fundamental** signifikan. "
-            f"Dari {total} pilar, hanya **{passed} LULUS** sementara {failed} gagal.\n\n"
+            f"⚠️ Mayoritas pilar menunjukkan **kelemahan fundamental** yang signifikan. "
+            f"Dari {total} pilar, hanya **{passed} LULUS** sementara {failed} belum memenuhi standar.\n\n"
             f"**Kekuatan terbatas:** {lulus_text}.\n\n"
             f"**Kelemahan dominan:** {gagal_text}.\n\n"
-            "Disarankan kehati-hatian ekstra atau mencari alternatif investasi."
+            "Disarankan kehati-hatian ekstra atau mencari alternatif emiten dengan valuasi dan kesehatan neraca lebih baik."
         )
         action = "Avoid"
 
