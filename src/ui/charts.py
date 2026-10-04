@@ -64,13 +64,13 @@ def svg_sparkline(
     if fill:
         # Area fill di bawah garis
         fill_points = f"{padding:.1f},{padding + h:.1f} " + polyline + f" {padding + w:.1f},{padding + h:.1f}"
-        fill_path = f'<polygon points="{fill_points}" fill="{color}" fill-opacity="0.12" />'
+        fill_path = f'<polygon points="{fill_points}" fill="{color}" fill-opacity="0.08" />'
 
     return f"""<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}"
         xmlns="http://www.w3.org/2000/svg" style="display:block;">
         {fill_path}
         <polyline points="{polyline}" fill="none" stroke="{color}"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>"""
 
 
@@ -103,7 +103,7 @@ def svg_bar_chart(
     bar_area_w = width - padding * 2
     bar_area_h = height - padding * 2 - label_h
 
-    bar_w = max(8, (bar_area_w / n) * 0.65)
+    bar_w = max(8, (bar_area_w / n) * 0.6)
     gap = (bar_area_w - bar_w * n) / max(1, n - 1) if n > 1 else 0
 
     min_v = min(values)
@@ -116,8 +116,8 @@ def svg_bar_chart(
         bar_h = max(3, ((v - min_v) / range_v) * bar_area_h)
         y = padding + bar_area_h - bar_h
 
-        # Warna gradient berdasarkan posisi
-        opacity = 0.5 + 0.5 * (i / max(1, n - 1))
+        # Opacity ramp: older bars are more transparent
+        opacity = 0.3 + 0.5 * (i / max(1, n - 1))
         bars.append(
             f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bar_h:.1f}" '
             f'rx="2" fill="{color}" fill-opacity="{opacity:.2f}" />'
@@ -128,7 +128,7 @@ def svg_bar_chart(
             ly = padding + bar_area_h + label_h - 2
             bars.append(
                 f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="middle" '
-                f'font-size="8" fill="#999999" font-family="Inter,sans-serif">{labels[i]}</text>'
+                f'font-size="7" fill="#999999" font-family="Inter,sans-serif">{labels[i]}</text>'
             )
 
     return f"""<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}"
@@ -187,11 +187,11 @@ def svg_gauge(
 
     return f"""<svg width="{size}" height="{int(size * 0.65)}" viewBox="0 0 {size} {int(size * 0.65)}"
         xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">
-        <path d="{bg_path}" fill="none" stroke="#131315" stroke-width="10" stroke-linecap="round" />
-        <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
-        <text x="{cx}" y="{cy - 2}" text-anchor="middle" font-size="20" font-weight="700"
+        <path d="{bg_path}" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="8" stroke-linecap="round" />
+        <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="8" stroke-linecap="round" />
+        <text x="{cx}" y="{cy - 2}" text-anchor="middle" font-size="18" font-weight="600"
             fill="#ffffff" font-family="Inter,sans-serif">{pct_text}</text>
-        <text x="{cx}" y="{cy + 14}" text-anchor="middle" font-size="9" font-weight="500"
+        <text x="{cx}" y="{cy + 13}" text-anchor="middle" font-size="8" font-weight="500"
             fill="#999999" font-family="Inter,sans-serif">{label}</text>
     </svg>"""
 
@@ -248,17 +248,17 @@ def _mini_gauge(
     pct_text = f"{value * 100:.1f}%"
 
     return f"""
-        <path d="{bg_path}" fill="none" stroke="#222226" stroke-width="6" stroke-linecap="round" />
-        <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="6" stroke-linecap="round" />
-        <text x="{cx}" y="{cy + 1}" text-anchor="middle" font-size="11" font-weight="700"
+        <path d="{bg_path}" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5" stroke-linecap="round" />
+        <path d="{fill_path}" fill="none" stroke="{color}" stroke-width="5" stroke-linecap="round" />
+        <text x="{cx}" y="{cy + 1}" text-anchor="middle" font-size="10" font-weight="600"
             fill="#fff" font-family="Inter,sans-serif">{pct_text}</text>
-        <text x="{cx}" y="{cy + 13}" text-anchor="middle" font-size="8" font-weight="500"
+        <text x="{cx}" y="{cy + 12}" text-anchor="middle" font-size="7" font-weight="500"
             fill="#999999" font-family="Inter,sans-serif">{label}</text>
     """
 
 
 # ═══════════════════════════════════════════════════════
-# PLOTLY CHARTS — untuk tampilan besar
+# PLOTLY CHARTS — minimalist styling
 # ═══════════════════════════════════════════════════════
 
 def plot_historical_vs_intrinsic(
@@ -280,30 +280,50 @@ def plot_historical_vs_intrinsic(
 
     fig.add_trace(go.Scatter(
         x=price_history["date"], y=price_history["close"],
-        mode="lines", name="Harga Pasar",
-        line=dict(color="#C682B3", width=2),
-        fill="tozeroy", fillcolor="rgba(198,130,179,0.06)",
+        mode="lines", name="Market Price",
+        line=dict(color="#C682B3", width=1.5),
+        fill="tozeroy", fillcolor="rgba(198,130,179,0.04)",
         hovertemplate="<b>%{x|%d %b %Y}</b><br>Rp %{y:,.0f}<extra></extra>",
     ))
 
     if intrinsic_value and intrinsic_value > 0:
         fig.add_hline(
             y=intrinsic_value,
-            line=dict(color="#69B37A", width=2, dash="dash"),
-            annotation_text=f"Intrinsic Value: {format_rupiah(intrinsic_value)}",
+            line=dict(color="#69B37A", width=1.5, dash="dash"),
+            annotation_text=f"Intrinsic: {format_rupiah(intrinsic_value)}",
             annotation_position="top right",
-            annotation_font=dict(color="#69B37A", size=11),
+            annotation_font=dict(color="#69B37A", size=10, family="Inter"),
         )
 
     fig.update_layout(
-        title=dict(text="Harga Historis vs Intrinsic Value", font=dict(size=14, color="#FFFFFF")),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, color="#999999"),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, tickformat=",", color="#999999"),
+        title=dict(
+            text="Price vs Intrinsic Value",
+            font=dict(size=13, color="#FFFFFF", family="Inter"),
+        ),
+        xaxis=dict(
+            gridcolor="rgba(255,255,255,0.03)",
+            showgrid=True,
+            color="#999999",
+            tickfont=dict(size=10, family="Inter"),
+        ),
+        yaxis=dict(
+            gridcolor="rgba(255,255,255,0.03)",
+            showgrid=True,
+            tickformat=",",
+            color="#999999",
+            tickfont=dict(size=10, family="Inter"),
+        ),
         template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(34,34,38,0.6)",
-        height=380, hovermode="x unified",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(34,34,38,0.4)",
+        height=360,
+        hovermode="x unified",
         margin=dict(l=50, r=15, t=45, b=30),
-        legend=dict(orientation="h", y=1.08, x=0.5, xanchor="center"),
+        legend=dict(
+            orientation="h", y=1.08, x=0.5, xanchor="center",
+            font=dict(size=10, family="Inter", color="#999999"),
+        ),
+        font=dict(family="Inter"),
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -311,7 +331,7 @@ def plot_historical_vs_intrinsic(
 
 def plot_future_projection(
     projected_values: list[dict],
-    label: str = "Proyeksi Future Value",
+    label: str = "Future Value Projection",
 ) -> None:
     """
     Chart proyeksi Future Value dari relasi rekurensi.
@@ -326,30 +346,52 @@ def plot_future_projection(
 
     df = pd.DataFrame(projected_values)
     n = len(df)
-    colors = [f"rgba({min(198, 140 + i*5)}, {max(100, 130 - i*4)}, {min(200, 150 + i*4)}, {0.5 + 0.4*(i/max(1,n-1)):.2f})" for i in range(n)]
+    # Monochrome accent ramp
+    colors = [f"rgba(198, 130, 179, {0.25 + 0.55*(i/max(1,n-1)):.2f})" for i in range(n)]
+    x_col = "year" if "year" in df.columns else ("period" if "period" in df.columns else df.columns[0])
 
     fig = go.Figure()
 
     fig.add_trace(go.Bar(
-        x=df["period"], y=df["value"], name="Future Value",
-        marker=dict(color=colors, line=dict(color="rgba(255,255,255,0.2)", width=1)),
-        hovertemplate="<b>Tahun ke-%{x}</b><br>Rp %{y:,.0f}<extra></extra>",
+        x=df[x_col], y=df["value"], name="Future Value",
+        marker=dict(color=colors, line=dict(color="rgba(255,255,255,0.06)", width=1)),
+        hovertemplate="<b>Tahun %{x}</b><br>Rp %{y:,.0f}<extra></extra>",
     ))
 
     fig.add_trace(go.Scatter(
-        x=df["period"], y=df["value"], mode="lines+markers", name="Trend",
-        line=dict(color="#C682B3", width=2), marker=dict(size=5, color="#C682B3"),
+        x=df[x_col], y=df["value"], mode="lines+markers", name="Trend",
+        line=dict(color="#C682B3", width=1.5), marker=dict(size=4, color="#C682B3"),
         hoverinfo="skip",
     ))
 
     fig.update_layout(
-        title=dict(text=label, font=dict(size=14, color="#FFFFFF")),
-        xaxis=dict(title="Tahun ke-", gridcolor="rgba(255,255,255,0.04)", dtick=1, color="#999999"),
-        yaxis=dict(title="Nilai (Rp)", gridcolor="rgba(255,255,255,0.04)", tickformat=",", color="#999999"),
+        title=dict(
+            text=label,
+            font=dict(size=13, color="#FFFFFF", family="Inter"),
+        ),
+        xaxis=dict(
+            title="Tahun",
+            type="category",
+            gridcolor="rgba(255,255,255,0.03)",
+            color="#999999",
+            tickfont=dict(size=10, family="Inter"),
+            title_font=dict(size=10, family="Inter", color="#999999"),
+        ),
+        yaxis=dict(
+            title="Nilai (Rp)",
+            gridcolor="rgba(255,255,255,0.03)",
+            tickformat=",",
+            color="#999999",
+            tickfont=dict(size=10, family="Inter"),
+            title_font=dict(size=10, family="Inter", color="#999999"),
+        ),
         template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(34,34,38,0.6)",
-        height=380, showlegend=False,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(34,34,38,0.4)",
+        height=360,
+        showlegend=False,
         margin=dict(l=50, r=15, t=45, b=30),
+        font=dict(family="Inter"),
     )
 
     st.plotly_chart(fig, use_container_width=True)

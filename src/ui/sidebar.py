@@ -1,11 +1,18 @@
 """
-sidebar.py — Komponen input ticker saham (tanpa sidebar).
+sidebar.py — Komponen input ticker saham dan parameter valuasi.
 
-Menampilkan selectbox dengan autocomplete di bagian atas halaman.
-User mengetik kode saham, sistem menampilkan rekomendasi, lalu user klik.
+Menampilkan selectbox dengan autocomplete di bagian atas halaman,
+serta accordion pengaturan parameter valuasi DCF (tanpa angka hardcode).
 """
 
 import streamlit as st
+
+from src.config import (
+    DEFAULT_DISCOUNT_RATE,
+    DEFAULT_GROWTH_RATE,
+    DEFAULT_PROJECTION_YEARS,
+    DEFAULT_TERMINAL_GROWTH,
+)
 
 
 # Daftar saham Indonesia populer untuk autocomplete
@@ -62,14 +69,21 @@ INDONESIAN_STOCKS: dict[str, str] = {
 
 def render_ticker_input() -> dict:
     """
-    Render input ticker di bagian atas halaman (BUKAN sidebar).
+    Render input ticker di bagian atas halaman beserta pengaturan parameter DCF.
 
     User bisa mengetik untuk mencari saham, sistem menampilkan rekomendasi.
-    Klik saham untuk memilih, lalu klik tombol ANALYSIS.
+    Klik saham untuk memilih, lalu klik tombol ANALYZE.
 
     Returns:
-        Dict: {"ticker": str, "company_name": str, "discount_rate": float,
-               "growth_rate": float, "projection_years": int, "analyze": bool}
+        Dict: {
+            "ticker": str,
+            "company_name": str,
+            "discount_rate": float,
+            "growth_rate": float,
+            "terminal_growth": float,
+            "projection_years": int,
+            "analyze": bool,
+        }
     """
     # Layout: selectbox + tombol di baris yang sama
     col_select, col_btn = st.columns([3, 1])
@@ -85,20 +99,59 @@ def render_ticker_input() -> dict:
         )
 
     with col_btn:
-        analyze = st.button("📊  ANALYSIS", use_container_width=True, type="primary")
+        analyze = st.button("ANALYZE", use_container_width=True, type="primary")
 
     company_name = INDONESIAN_STOCKS.get(ticker, ticker) if ticker else ""
 
-    # Default parameter
-    discount_rate = 0.10
-    growth_rate = 0.08
-    projection_years = 10
+    # Accordion Pengaturan Parameter Valuasi DCF
+    with st.expander("⚙️ Parameter Valuasi DCF (Opsional)", expanded=False):
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            discount_pct = st.slider(
+                "Discount Rate (WACC)",
+                min_value=6.0,
+                max_value=20.0,
+                value=float(DEFAULT_DISCOUNT_RATE * 100),
+                step=0.5,
+                format="%.1f%%",
+                help="Tingkat pengembalian minimal yang diharapkan investor (Hurdle Rate).",
+            )
+        with c2:
+            growth_pct = st.slider(
+                "Growth Rate (FCF)",
+                min_value=0.0,
+                max_value=25.0,
+                value=float(DEFAULT_GROWTH_RATE * 100),
+                step=0.5,
+                format="%.1f%%",
+                help="Estimasi pertumbuhan tahunan arus kas bebas selama fase eksplisit.",
+            )
+        with c3:
+            terminal_pct = st.slider(
+                "Terminal Growth Rate",
+                min_value=1.0,
+                max_value=5.0,
+                value=float(DEFAULT_TERMINAL_GROWTH * 100),
+                step=0.25,
+                format="%.2f%%",
+                help="Tingkat pertumbuhan jangka panjang abadi (~pertumbuhan ekonomi nasional).",
+            )
+        with c4:
+            proj_years = st.slider(
+                "Projection Years",
+                min_value=3,
+                max_value=10,
+                value=int(DEFAULT_PROJECTION_YEARS),
+                step=1,
+                help="Jumlah tahun periode proyeksi eksplisit sebelum nilai terminal.",
+            )
 
     return {
         "ticker": ticker.strip().upper() if ticker else "",
         "company_name": company_name,
-        "discount_rate": discount_rate,
-        "growth_rate": growth_rate,
-        "projection_years": int(projection_years),
+        "discount_rate": discount_pct / 100.0,
+        "growth_rate": growth_pct / 100.0,
+        "terminal_growth": terminal_pct / 100.0,
+        "projection_years": int(proj_years),
         "analyze": analyze,
     }
